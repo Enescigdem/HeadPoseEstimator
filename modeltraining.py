@@ -32,7 +32,7 @@ from google.colab import drive
 drive.mount('/content/drive',force_remount=True)
 import scipy.io as sio
 
-resnetmodel = models.resnext50_32x4d(pretrained=True)
+resnetmodel = models.resnext34(pretrained=True)
 resnetmodel.fc = nn.Linear(2048,3)
 
 print(resnetmodel)
