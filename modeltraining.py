@@ -1,6 +1,4 @@
 
-#SON.ipynb
-
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -27,44 +25,42 @@ import matplotlib.patches as patches
 
 from cv2 import VideoWriter, VideoWriter_fourcc
 from PIL import ImageDraw
+import scipy.io as sio
+
+#####For google colab 
 
 from google.colab import drive
 drive.mount('/content/drive',force_remount=True)
-import scipy.io as sio
+####
+###################################################################
+##HELPERS
 
-resnetmodel = models.resnext34(pretrained=True)
+def plot_graph(plotlist1,plotlist2,ylabel):
+   #Plot accuracy graph 
+    plt.xlabel("Training Epochs")
+    plt.ylabel(ylabel)
+    plt.plot(plotlist1, color="green")
+    plt.plot(plotlist2, color="red")
+    
+    plt.gca().legend(('Train', 'Validation'))
+    plt.show()
+
+
+
+resnetmodel = models.resnet34(pretrained=True)
 resnetmodel.fc = nn.Linear(2048,3)
 
 print(resnetmodel)
 
-def get_pose_params_from_mat(mat_path):
-    # This functions gets the pose parameters from the .mat
-    # Annotations that come with the Pose_300W_LP dataset.
-    mat = sio.loadmat(mat_path)
-    # [pitch yaw roll tdx tdy tdz scale_factor]
-    pre_pose_params = mat['Pose_Para'][0]
-    # Get [pitch, yaw, roll, tdx, tdy]
-    pose_params = pre_pose_params[:5]
-    return pose_params
+###### Retrieving pose and 2d landmark informations
+def obtain_2dmark_pose(mat_path):
 
-def get_ypr_from_mat(mat_path):
-    # Get yaw, pitch, roll from .mat annotation.
-    # They are in radians
-    mat = sio.loadmat(mat_path)
-    # [pitch yaw roll tdx tdy tdz scale_factor]
-    pre_pose_params = mat['Pose_Para'][0]
-    # Get [pitch, yaw, roll]
-    pose_params = pre_pose_params[:3]
-    return pose_params
-
-def get_pt2d_from_mat(mat_path):
-    # Get 2D landmarks
     mat = sio.loadmat(mat_path)
     pt2d = mat['pt2d']
-    return pt2d
-
-
-
+    pre_pose = mat['Pose_Para'][0]
+    pose_params = pre_pose_params[:3]
+    return pt2d,pose
+##################################################################
 preprocess = transforms.Compose([
     transforms.Resize(128),
     transforms.CenterCrop(64), 
@@ -92,7 +88,8 @@ class Custom_dataset(Dataset):
         img = Image.open(t0path)
 
         # Crop the face loosely
-        pt2d = get_pt2d_from_mat(mat_path)
+        pt2d ,pose = obtain_2dmark_pose(mat_path)
+        
         x_min = min(pt2d[0,:])
         y_min = min(pt2d[1,:])
         x_max = max(pt2d[0,:])
@@ -107,33 +104,24 @@ class Custom_dataset(Dataset):
         img = img.crop((int(x_min), int(y_min), int(x_max), int(y_max)))
 
         # We get the pose in radians
-        pose = get_ypr_from_mat(mat_path)
+        
         # And convert to degrees.
         pitch = pose[0] * 180 / np.pi
         yaw = pose[1] * 180 / np.pi
         roll = pose[2] * 180 / np.pi
        
         poses = torch.FloatTensor([yaw, pitch, roll])
-        
-       
-        
-        
         t0tensor = preprocess(img).float()
         t0tensor = t0tensor.squeeze()
         t0Var = Variable(t0tensor)
-
-     
         inputs = t0Var
         outputs = poses
 
         return (inputs, outputs)
 
 
-
-
-
-csv_train = pd.read_csv("drive/My Drive/Colab Notebooks/train.csv")
-val_train = pd.read_csv("drive/My Drive/Colab Notebooks/val.csv")
+csv_train = pd.read_csv("train.csv")
+val_train = pd.read_csv("val.csv")
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -147,27 +135,8 @@ datasetloaders = {'train': trainloader, 'val': valloader}
 
 print(len(traindataset))
 print(len(valdataset))
-for i,y in trainloader:
-  print(i.shape)
-  print(y.shape)
-  break
-for i,y in valloader:
-  print(i.shape)
-  print(y.shape)
-  break
 
-print(len(traindataset))
-print(len(valdataset))
 
-def plot_graph(plotlist1,plotlist2,ylabel):
-   #Plot accuracy graph 
-    plt.xlabel("Training Epochs")
-    plt.ylabel(ylabel)
-    plt.plot(plotlist1, color="green")
-    plt.plot(plotlist2, color="red")
-    
-    plt.gca().legend(('Train', 'Validation'))
-    plt.show()
 def regressionnetworktrain(mmodel,criterion,optimizer,dataloaders,epoch_number,device):
     mmodel.to(device)
     best_model_wts = copy.deepcopy(mmodel.state_dict())
