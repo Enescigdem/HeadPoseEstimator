@@ -51,7 +51,7 @@ def draw_axis(img, yaw, pitch, roll, tdx=None, tdy=None, size = 50):
     return img
 
 
-####Lİttle myNetwork
+####Little myNetwork
 
 resnetmodel = models.resnet34(pretrained = True)
 class myNetwork(nn.Module):
