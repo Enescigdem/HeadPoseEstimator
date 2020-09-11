@@ -1,2 +1,3 @@
 # HeadPoseEstimator
-Pitch,yaw and roll values of head regression with Pytorch framework
+Pitch,yaw and roll values of head pose </br> 
+Regression model with Pytorch framework
