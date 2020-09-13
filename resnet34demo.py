@@ -144,8 +144,7 @@ def main():
     ad = 0.6
     img_idx = 0
     skip_frame =1
-    # load our serialized face detector from disk
-    print("[INFO] loading face detector...")
+
     protoPath = os.path.sep.join(["face_detector", "deploy.prototxt"])
     modelPath = os.path.sep.join(["face_detector",
         "res10_300x300_ssd_iter_140000.caffemodel"])
@@ -157,7 +156,7 @@ def main():
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1024*1)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 768*1)
     
-    print('Start detecting pose ...')
+    print('Starting ...')
     detected_pre = np.empty((1,1,1))
 
     #######OUr model is initiating and loading
@@ -172,18 +171,12 @@ def main():
 
         img_idx = img_idx + 1
         img_h, img_w, _ = np.shape(input_img)
-
         
         if img_idx==1 or img_idx%skip_frame == 0:
-            time_detection = 0
-            time_network = 0
-            time_plot = 0
-            
+
             # detect faces using LBP detector
             gray_img = cv2.cvtColor(input_img,cv2.COLOR_BGR2GRAY)
           
-            # pass the blob through the network and obtain the detections and
-            # predictions
             blob = cv2.dnn.blobFromImage(cv2.resize(input_img, (300, 300)), 1.0,
                 (300, 300), (104.0, 177.0, 123.0))
             net.setInput(blob)
