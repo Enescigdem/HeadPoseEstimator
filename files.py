@@ -35,18 +35,6 @@ for folder in train_folders:
 
 print(len(train_images))
 
-train_images = []
-train_mats=[]
-for folder in train_folders:
-    ffimages = glob.glob(folder + '/*.jpg')
-    ffmats = glob.glob(folder + '/*.mat')
-    ffimages.sort()
-    ffmats.sort()
-    for f in ffimages:
-        train_images.append(f)
-    for fm in ffmats:
-      train_mats.append(fm)
-
 
 val_images = []
 val_mats=[]
